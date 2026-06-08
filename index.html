@@ -498,9 +498,235 @@
           Online
         </div>
       </div>
-      
-         <div>p</div> 
+ <div class="categories">
+          <button class="category active" data-category="comprimento">
+            <b>📏</b>Comprimento
+          </button>
+          <button class="category" data-category="peso">
+            <b>⚖️</b>Peso
+          </button>
+          <button class="category" data-category="temperatura">
+            <b>🌡️</b>Temperatura
+          </button>
+          <button class="category" data-category="volume">
+            <b>💧</b>Volume
+          </button>
+          <button class="category" data-category="area">
+            <b>◼</b>Área
+          </button>
+        </div>
 
+        <div class="converter">
+          <div class="input-card">
+            <label>
+              <span>Valor inicial</span>
+              <span>De</span>
+            </label>
+
+            <div class="input-row">
+              <input type="number" id="valueInput" value="1" placeholder="0" />
+              <select id="fromUnit"></select>
+            </div>
+          </div>
+
+          <div class="swap-wrap">
+            <button class="swap" id="swapButton" title="Trocar unidades">⇅</button>
+          </div>
+
+          <div class="input-card">
+            <label>
+              <span>Resultado final</span>
+              <span>Para</span>
+            </label>
+
+            <div class="input-row">
+              <input class="result-input" id="resultInput" readonly />
+              <select id="toUnit"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="formula" id="formulaText">
+          Digite um valor para converter automaticamente.
+        </div>
+
+        <p class="mobile-note">Funciona bem no celular, tablet e computador.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const units = {
+      comprimento: {
+        color: ["#7c3aed", "#06b6d4"],
+        label: "Comprimento",
+        data: {
+          "Quilômetro (km)": 1000,
+          "Metro (m)": 1,
+          "Centímetro (cm)": 0.01,
+          "Milímetro (mm)": 0.001,
+          "Milha (mi)": 1609.34,
+          "Pé (ft)": 0.3048,
+          "Polegada (in)": 0.0254
+        }
+      },
+      peso: {
+        color: ["#16a34a", "#22c55e"],
+        label: "Peso",
+        data: {
+          "Tonelada (t)": 1000,
+          "Quilograma (kg)": 1,
+          "Grama (g)": 0.001,
+          "Miligrama (mg)": 0.000001,
+          "Libra (lb)": 0.453592,
+          "Onça (oz)": 0.0283495
+        }
+      },
+      temperatura: {
+        color: ["#dc2626", "#f97316"],
+        label: "Temperatura",
+        data: {
+          "Celsius (°C)": "C",
+          "Fahrenheit (°F)": "F",
+          "Kelvin (K)": "K"
+        }
+      },
+      volume: {
+        color: ["#0891b2", "#38bdf8"],
+        label: "Volume",
+        data: {
+          "Metro cúbico (m³)": 1000,
+          "Litro (L)": 1,
+          "Mililitro (ml)": 0.001,
+          "Galão (gal)": 3.78541,
+          "Quarto (qt)": 0.946353,
+          "Pinta (pt)": 0.473176
+        }
+      },
+      area: {
+        color: ["#9333ea", "#ec4899"],
+        label: "Área",
+        data: {
+          "Quilômetro quadrado (km²)": 1000000,
+          "Hectare (ha)": 10000,
+          "Metro quadrado (m²)": 1,
+          "Centímetro quadrado (cm²)": 0.0001,
+          "Milha quadrada (mi²)": 2589988.11,
+          "Acre (ac)": 4046.86
+        }
+      }
+    };
+
+    let currentCategory = "comprimento";
+
+    const valueInput = document.getElementById("valueInput");
+    const resultInput = document.getElementById("resultInput");
+    const fromUnit = document.getElementById("fromUnit");
+    const toUnit = document.getElementById("toUnit");
+    const swapButton = document.getElementById("swapButton");
+    const categoryButtons = document.querySelectorAll(".category");
+    const formulaText = document.getElementById("formulaText");
+
+    function formatNumber(number, digits = 6) {
+      return Number(number).toLocaleString("pt-BR", {
+        maximumFractionDigits: digits
+      });
+    }
+
+    function loadUnits() {
+      const options = Object.keys(units[currentCategory].data);
+
+      fromUnit.innerHTML = "";
+      toUnit.innerHTML = "";
+
+      options.forEach(unit => {
+        fromUnit.add(new Option(unit, unit));
+        toUnit.add(new Option(unit, unit));
+      });
+
+      toUnit.selectedIndex = options.length > 1 ? 1 : 0;
+      convert();
+    }
+
+    function convertTemperature(value, from, to) {
+      const fromSymbol = units.temperatura.data[from];
+      const toSymbol = units.temperatura.data[to];
+
+      let celsius = value;
+
+      if (fromSymbol === "F") celsius = (value - 32) * 5 / 9;
+      if (fromSymbol === "K") celsius = value - 273.15;
+
+      if (toSymbol === "C") return celsius;
+      if (toSymbol === "F") return (celsius * 9 / 5) + 32;
+      if (toSymbol === "K") return celsius + 273.15;
+    }
+
+    function convert() {
+      const value = parseFloat(valueInput.value);
+
+      if (Number.isNaN(value)) {
+        resultInput.value = "Digite um valor";
+        formulaText.textContent = "Digite um número válido para ver a conversão.";
+        return;
+      }
+
+      if (currentCategory === "temperatura") {
+        const result = convertTemperature(value, fromUnit.value, toUnit.value);
+        resultInput.value = formatNumber(result, 2);
+        formulaText.textContent = `${formatNumber(value, 2)} ${fromUnit.value} = ${formatNumber(result, 2)} ${toUnit.value}`;
+        return;
+      }
+
+      const data = units[currentCategory].data;
+      const baseValue = value * data[fromUnit.value];
+      const finalValue = baseValue / data[toUnit.value];
+
+      resultInput.value = formatNumber(finalValue);
+      formulaText.textContent = `${formatNumber(value)} ${fromUnit.value} = ${formatNumber(finalValue)} ${toUnit.value}`;
+    }
+
+    function changeTheme(category) {
+      const [primary, secondary] = units[category].color;
+
+      document.documentElement.style.setProperty("--primary", primary);
+      document.documentElement.style.setProperty("--secondary", secondary);
+
+      document.body.style.background = `
+        radial-gradient(circle at 15% 15%, ${primary}70, transparent 30%),
+        radial-gradient(circle at 85% 20%, ${secondary}60, transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(34, 197, 94, 0.15), transparent 30%),
+        var(--bg-dark)
+      `;
+    }
+
+    categoryButtons.forEach(button => {
+      button.addEventListener("click", () => {
+        categoryButtons.forEach(btn => btn.classList.remove("active"));
+
+        button.classList.add("active");
+        currentCategory = button.dataset.category;
+
+        changeTheme(currentCategory);
+        loadUnits();
+      });
+    });
+
+    swapButton.addEventListener("click", () => {
+      const oldFrom = fromUnit.value;
+      fromUnit.value = toUnit.value;
+      toUnit.value = oldFrom;
+      convert();
+    });
+
+    valueInput.addEventListener("input", convert);
+    fromUnit.addEventListener("change", convert);
+    toUnit.addEventListener("change", convert);
+
+    loadUnits();
+  </script>
+</body>
+</html>
 
 
 
